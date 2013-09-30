@@ -1,4 +1,0 @@
-texasholdem
-===========
-
-texasholdem
