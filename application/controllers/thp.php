@@ -1,170 +1,9 @@
-<?php
-/******************************************************************************
- *
- * Definition of the PTHE (PHP Texas Hold'em Engine).
- *
- * Designed and written by Salvatore Rotondo, Apr/2011.
- * Contact: s.rotondo90@gmail.com
- *
- * Last revision: 2011-04-14
- * Version: 1.0
- *
- *****************************************************************************
- *
- * http://creativecommons.org/licenses/by-sa/3.0/
- *
- * This work is licensed under Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)
- * You are free to share, copy, distribute and transmit the work; to adapt the work; 
- * to make commercial use of the work.
- *
- * Under the following conditions:
- *
- * - You must attribute "Php Texas Holdem Engine" to "Salvatore Rotondo".
- * - If you alter, transform, or build upon this work, you may distribute the resulting 
- *   work only under the same or similar license to this one. 
- *
- *
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * 
- *
- *****************************************************************************
- * Usage examples:
- *****************************************************************************
- 
- 
-	#> Instantiate the PTHE object with the number of players.
-	$PTHE = new PTHE(2);
-	
-	#> Getting flop, turn and river's card.
-	print_r($PTHE->show_flop());
-	print_r($PTHE->show_turn());
-	print_r($PTHE->show_river());
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
-	#> Retrieves the hands generated for players.
-	print_r($PTHE->show_players_hands());
-	
-	#> Retrieve the points awarded to players.
-	print_r($PTHE->show_players_points());
-
-	#> Clean all.
-	$PTHE->free_resources();
-
-
- *****************************************************************************/
-
- 
-
-/** * Defining poker deck and basic deck method
-	* @author Salvatore Rotondo <s.rotondo90@gmail.com>
-*/
-class PokerDeck
-{
-	/**	* 52 card poker deck 
-	*/
-	private $deck = array(	'AC', '2C', '3C', '4C', '5C', '6C', '7C', '8C', '9C', '10C', 'JC', 'QC', 'KC',
-                                'AQ', '2Q', '3Q', '4Q', '5Q', '6Q', '7Q', '8Q', '9Q', '10Q', 'JQ', 'QQ', 'KQ',
-                                'AF', '2F', '3F', '4F', '5F', '6F', '7F', '8F', '9F', '10F', 'JF', 'QF', 'KF',
-                                'AP', '2P', '3P', '4P', '5P', '6P', '7P', '8P', '9P', '10P', 'JP', 'QP', 'KP',
-                             );
-	
-	private $deck_index 	= 0;
-	private $deck_shuffle	= array();
-	private $players_hands 	= array();	
-		
-	
-	
-	/** * Shuffle deck order
-	*/
-	public function make_deck_shuffle()
-	{
-		$this->deck_index = 0;
-		$this->deck_shuffle = $this->deck;
-		shuffle($this->deck_shuffle);
-		
-		return $this->deck_shuffle;
-	}
+class Thp extends CI_Controller {
 
 	
-	/** * Get players hands
-	*/
-	public function get_players_hands($players, $cards)
-	{
-		if ((int)$players && (int)$cards)
-		{	
-			$player = 0;
-			$this->players_hands = array();
-		
-			for ($i = 1; $i <= $players; ++$i)
-			{
-				++$player;
-				$this->players_hands['player_' . $player][] = $this->deck_shuffle[$i];
-				
-				for ($j = 1; $j < $cards; ++$j)
-						$this->players_hands['player_' . $player][] = $this->deck_shuffle[($players*$j)+$player];
-			}
-			
-			$this->deck_index = $players*$cards;
-			
-			return $this->players_hands;
-		}
-	}
-	
-	
-	/** * Draw $number card(s)
-	*/
-	public function draw_card($number)
-	{
-		++$this->deck_index;
-		
-		$draw_cards = array();
-		
-		for ($i = 0; $i < $number; ++$i)
-				$draw_cards[] = $this->deck_shuffle[++$this->deck_index];
-				
-	
-		return $draw_cards;
-	}
-	
-	
-	/** * return the value of card, without consider seed
-	*/
-	public function card_value($card)
-	{
-		return substr($card, 0, -1);
-	}
-	
-	/** * return the seed of the card
-	*/
-	public function card_seed($card)
-	{
-		return substr($card, -1);	
-	}
-	
-	
-	public function reset_pokerdeck()
-	{
-		unset($this->deck);
-		unset($this->deck_index);
-		unset($this->deck_shuffle);
-		unset($this->players_hands);
-	}
-}
-
-
-/** * Defining Texas Holdem Rules and specific method
-	* @author Salvatore Rotondo <s.rotondo90@gmail.com>
-*/
-class PTHE extends PokerDeck
-{
-	private $TH_cards				= 2;
+        private $TH_cards				= 2;
 	private $TH_players_hands 	= array();
 	private $TH_players_points 	= array();
 	private $TH_game_state		= array();
@@ -206,18 +45,31 @@ class PTHE extends PokerDeck
 											200		=> 'High Card'
 											);
 		
-		
-	public function __construct($players = 1)
+	
+        
+        function __construct($players = 6)
 	{
-		$this->make_deck_shuffle();
-		$this->TH_players_hands = $this->get_players_hands($players, $this->TH_cards);
-		$this->TH_draw_state();
-		
-		for ($P = 1; $P <= $players; ++$P)
-				$this->evaluate_points($P);
+            
+                parent::__construct();
+               
+                $this->load->model("modelthp");
+//		$this->model->make_deck_shuffle();
+//		$this->TH_players_hands = $this->model->get_players_hands($players, $this->TH_cards);
+//		$this->TH_draw_state();
+//		
+//		for ($P = 1; $P <= $players; ++$P)
+//				$this->evaluate_points($P);
 	}
 
-	
+	public function index()
+	{
+		//$this->load->view('welcome_message');
+                //$this->model->make_deck_shuffle();
+               $test = $this->model->test();
+               
+          
+	}
+        
 	private function TH_draw_state()
 	{
 		$this->TH_game_state['flop'] = $this->draw_card(3);
@@ -1189,7 +1041,7 @@ class PTHE extends PokerDeck
 		unset($this->TH_desc_cards);
 		unset($this->TH_desc_points);
 	}
-	
 }
 
-?>
+/* End of file welcome.php */
+/* Location: ./application/controllers/welcome.php */
